@@ -10,7 +10,7 @@
            :name="name"
            @focus="showOptions()"
            @blur="exit()"
-           @keyup="keyMonitor"
+           @input="search"
            v-model="searchFilter"
            :disabled="disabled"
            :placeholder="placeholder"
@@ -22,7 +22,7 @@
       <div
         class="dropdown-item"
         @mousedown="selectOption(option)"
-        v-for="(option, index) in filteredOptions"
+        v-for="(option, index) in healthItems"
         :key="index">
         {{ option.name || option.text || option.id || '-' }}
       </div>
@@ -31,9 +31,10 @@
 </template>
 
 <script>
-
+// import axios from 'axios'
 
     export default {
+
         name: "InputSelect",
       template: 'Dropdown',
       props: {
@@ -44,9 +45,9 @@
           note: 'Input name'
         },
         options: {
-          type: Array,
-          required: true,
-          default: [],
+          // type: Array,
+          required: false,
+          // default: [],
           note: 'Options of dropdown. An array of options with id and name',
         },
         placeholder: {
@@ -75,25 +76,42 @@
         return {
           selected: {},
           optionsShown: false,
-          searchFilter: ''
+          searchFilter: '',
+          healthItems : [],
+
         }
       },
       created() {
         this.$emit('selected', this.selected);
+        this.search();
+
       },
       computed: {
         filteredOptions() {
           const filtered = [];
           const regOption = new RegExp(this.searchFilter, 'ig');
-          for (const option of this.options) {
-            if (this.searchFilter.length < 1 || option.name.match(regOption)){
-              if (filtered.length < this.maxItem) filtered.push(option);
-            }
-          }
+          // for (const option of this.options) {
+          //   if (this.searchFilter.length < 1 || option.name.match(regOption)){
+          //     if (filtered.length < this.maxItem) filtered.push(option);
+          //   }
+          // }
           return filtered;
         }
       },
       methods: {
+          async search(searchString){
+            //searchString = (searchString ) ? searchString : '';
+            this.$axios.get('api/search/health', (searchString ) ? {search :searchString} : {}).then(response => {
+              this.healthItems = (response.data) ? response.data: [];
+              console.log(response)
+            }).catch( (error) => {
+              console.log(error.response)
+              // if(error.response.status === 422 && error.response.data){//ошибка заполнения полей
+              //   this.commit('Login/SET_SERVER_ERRORS', error.response.data);
+              // }
+            });
+            return ;
+          },
         selectOption(option) {
           this.selected = option;
           this.optionsShown = false;
